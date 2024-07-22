@@ -5,6 +5,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
@@ -92,12 +93,16 @@ public class SpringBatchConfig {
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
-                // added befor for fault taularance
-                .faultTolerant()
-                .skipLimit(100)    // how many times the exxeption to be ignored
-                .skip(NumberFormatException.class) // which exception to skip
-                .noSkip(IllegalArgumentException.class) // rollback and not skip ehich exception
+                // added default skip policy  for fault taularance
+//                .faultTolerant()
+//                .skipLimit(100)    // how many times the exxeption to be ignored
+//                .skip(NumberFormatException.class) // which exception to skip
+//                .noSkip(IllegalArgumentException.class) // rollback and not skip ehich exception
                 //added below for asynchronous call all threads will run in parallel
+                
+                // ADD CUSTOME SKIP POLICY FOR FAULT TOLERANCE
+                .faultTolerant()
+                .skipPolicy(skipPolicy())
                 .taskExecutor(taskExecutor())
                 .build();
     }
@@ -116,6 +121,11 @@ public class SpringBatchConfig {
         SimpleAsyncTaskExecutor asyncTaskExecutor = new SimpleAsyncTaskExecutor();
         asyncTaskExecutor.setConcurrencyLimit(10);
         return asyncTaskExecutor;
+    }
+   
+    @Bean
+    public SkipPolicy skipPolicy() {
+    	return new ExceptionSkipPolicy();
     }
 
 }
