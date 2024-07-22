@@ -92,6 +92,12 @@ public class SpringBatchConfig {
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
+                // added befor for fault taularance
+                .faultTolerant()
+                .skipLimit(100)    // how many times the exxeption to be ignored
+                .skip(NumberFormatException.class) // which exception to skip
+                .noSkip(IllegalArgumentException.class) // rollback and not skip ehich exception
+                //added below for asynchronous call all threads will run in parallel
                 .taskExecutor(taskExecutor())
                 .build();
     }
