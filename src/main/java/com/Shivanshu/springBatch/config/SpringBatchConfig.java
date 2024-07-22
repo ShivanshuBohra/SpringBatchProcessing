@@ -93,16 +93,17 @@ public class SpringBatchConfig {
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
-                // added default skip policy  for fault taularance
+                // added default skip policy  for fault tolerance
 //                .faultTolerant()
 //                .skipLimit(100)    // how many times the exxeption to be ignored
 //                .skip(NumberFormatException.class) // which exception to skip
 //                .noSkip(IllegalArgumentException.class) // rollback and not skip ehich exception
-                //added below for asynchronous call all threads will run in parallel
                 
-                // ADD CUSTOME SKIP POLICY FOR FAULT TOLERANCE
+                // ADD CUSTOM SKIP POLICY FOR FAULT TOLERANCE
                 .faultTolerant()
                 .skipPolicy(skipPolicy())
+                
+                //added below for asynchronous call all threads will run in parallel
                 .taskExecutor(taskExecutor())
                 .build();
     }
