@@ -1,10 +1,13 @@
 package com.Shivanshu.springBatch.config;
 
+import java.io.File;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.step.skip.SkipPolicy;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -13,6 +16,7 @@ import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -44,9 +48,12 @@ public class SpringBatchConfig {
 
 	// Read the file from Source
     @Bean
-    public FlatFileItemReader<Customer> reader() {
+    // By default scope is singleton but we want new Bean for each step.
+    @StepScope  
+    public FlatFileItemReader<Customer> reader(@Value("#{jobParameters[fullPathFileName]}") String pathToFIle) {
         FlatFileItemReader<Customer> itemReader = new FlatFileItemReader<>();
-        itemReader.setResource(new FileSystemResource("src/main/resources/customers.csv"));
+       // itemReader.setResource(new FileSystemResource("src/main/resources/customers.csv"));
+        itemReader.setResource(new FileSystemResource(new File(pathToFIle)));
         itemReader.setName("csvReader");
         itemReader.setLinesToSkip(1);
         itemReader.setLineMapper(lineMapper());
@@ -88,9 +95,9 @@ public class SpringBatchConfig {
     }
 
     @Bean
-    public Step step1() {
+    public Step step1(FlatFileItemReader<Customer> reader) {
         return stepBuilderFactory.get("csv-step").<Customer, Customer>chunk(10)
-                .reader(reader())
+                .reader(reader)
                 .processor(processor())
                 .writer(writer())
                 // added default skip policy  for fault tolerance
@@ -110,9 +117,9 @@ public class SpringBatchConfig {
 
     // Run the JOb , It can have multiple steps like step1, steo2 etc
     @Bean
-    public Job runJob() {
+    public Job runJob(FlatFileItemReader<Customer> reader) {
         return jobBuilderFactory.get("importCustomers")
-                .flow(step1()).end().build();
+                .flow(step1(reader)).end().build();
 
     }
 
